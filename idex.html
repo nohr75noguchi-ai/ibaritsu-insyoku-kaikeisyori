@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>売上管理 | ドリンク注文</title>
+    <meta name="description" content="ドリンク売上管理システム - 6種類のドリンクをかんたん注文">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        /* ===== CSS Reset & Base ===== */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --accent: #f59e0b;
+            --accent-light: #fbbf24;
+            --bg: #f0f4f8;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ===== Header ===== */
+        .header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #3b82f6 100%);
+            color: #fff;
+            padding: 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .header-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 18px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-title .icon {
+            font-size: 1.6rem;
+        }
+
+        .header-subtitle {
+            font-size: 0.85rem;
+            font-weight: 400;
+            opacity: 0.85;
+            margin-top: 2px;
+        }
+
+        .header-price-badge {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+        }
+
+        /* ===== Summary Bar ===== */
+        .summary-bar {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 24px;
+            position: sticky;
+            top: 68px;
+            z-index: 90;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .summary-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .summary-stats {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .summary-stat {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .summary-stat .value {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .summary-stat .unit {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .summary-total {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: 0.02em;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+            transition: var(--transition);
+        }
+
+        .summary-total:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+        }
+
+        /* ===== Products Grid ===== */
+        .products-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        /* ===== Product Card ===== */
+        .product-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            border: 2px solid transparent;
+            transition: var(--transition);
+            display: flex;
+            align-items: stretch;
+            position: relative;
+        }
+
+        .product-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .product-card.selected {
+            border-color: var(--primary);
+            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.2);
+        }
+
+        /* Checkbox Area */
+        .product-checkbox-area {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 14px;
+            cursor: pointer;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .product-checkbox-area input[type="checkbox"] {
+            display: none;
+        }
+
+        .checkbox-custom {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 2.5px solid #cbd5e1;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .checkbox-custom:hover {
+            border-color: var(--primary-light);
+            background: #eff6ff;
+        }
+
+        .checkbox-custom svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: #fff;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: var(--transition);
+        }
+
+        .product-checkbox-area input:checked+.checkbox-custom {
+            background: var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+        }
+
+        .product-checkbox-area input:checked+.checkbox-custom svg {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Product Image */
+        .product-image-wrapper {
+            width: 120px;
+            height: 140px;
+            flex-shrink: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .product-image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .product-card:hover .product-image-wrapper img {
+            transform: scale(1.05);
+        }
+
+        /* Product Info */
+        .product-info {
+            flex: 1;
+            padding: 16px 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        .product-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.3;
+        }
+
+        .product-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .product-price {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Quantity Selector */
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            margin-top: 6px;
+            background: #f1f5f9;
+            border-radius: 10px;
+            overflow: hidden;
+            width: fit-content;
+            border: 1px solid var(--border);
+        }
+
+        .qty-btn {
+            width: 40px;
+            height: 38px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            color: var(--text-secondary);
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .qty-btn:hover {
+            background: #e2e8f0;
+            color: var(--primary);
+        }
+
+        .qty-btn:active {
+            background: #cbd5e1;
+            transform: scale(0.92);
+        }
+
+        .qty-btn svg {
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+        }
+
+        .qty-value {
+            width: 44px;
+            text-align: center;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text);
+            background: #fff;
+            line-height: 38px;
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+        }
+
+        .qty-value.has-items {
+            color: var(--primary);
+        }
+
+        /* ===== Footer / Action Area ===== */
+        .action-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            padding: 16px 24px;
+            z-index: 100;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .action-bar-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .action-total-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .action-total-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .action-total-amount {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .action-total-amount .yen {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            border: none;
+            padding: 14px 40px;
+            border-radius: 14px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+            font-family: inherit;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(37, 99, 235, 0.4);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        /* ===== Bottom Spacer ===== */
+        .bottom-spacer {
+            height: 100px;
+        }
+
+        /* ===== Animations ===== */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .product-card {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .product-card:nth-child(1) {
+            animation-delay: 0.05s;
+        }
+
+        .product-card:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .product-card:nth-child(3) {
+            animation-delay: 0.15s;
+        }
+
+        .product-card:nth-child(4) {
+            animation-delay: 0.2s;
+        }
+
+        .product-card:nth-child(5) {
+            animation-delay: 0.25s;
+        }
+
+        .product-card:nth-child(6) {
+            animation-delay: 0.3s;
+        }
+
+        /* ===== Responsive - Smartphone ===== */
+        @media (max-width: 768px) {
+            .header-inner {
+                padding: 14px 16px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .header-title {
+                font-size: 1.25rem;
+            }
+
+            .header-price-badge {
+                font-size: 0.8rem;
+                padding: 6px 14px;
+            }
+
+            .summary-bar {
+                top: 94px;
+                padding: 10px 16px;
+            }
+
+            .summary-stats {
+                gap: 16px;
+            }
+
+            .summary-stat {
+                font-size: 0.8rem;
+            }
+
+            .summary-stat .value {
+                font-size: 1.1rem;
+            }
+
+            .summary-total {
+                font-size: 0.95rem;
+                padding: 8px 18px;
+            }
+
+            .products-container {
+                padding: 16px;
+            }
+
+            .products-grid {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+
+            .product-image-wrapper {
+                width: 100px;
+                height: 120px;
+            }
+
+            .product-info {
+                padding: 12px 14px;
+            }
+
+            .product-name {
+                font-size: 1rem;
+            }
+
+            .action-bar {
+                padding: 12px 16px;
+            }
+
+            .action-total-amount {
+                font-size: 1.3rem;
+            }
+
+            .action-btn {
+                padding: 12px 28px;
+                font-size: 0.95rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .product-checkbox-area {
+                padding: 0 10px;
+            }
+
+            .checkbox-custom {
+                width: 28px;
+                height: 28px;
+            }
+
+            .product-image-wrapper {
+                width: 80px;
+                height: 100px;
+            }
+
+            .product-info {
+                padding: 10px 12px;
+            }
+
+            .product-name {
+                font-size: 0.95rem;
+            }
+
+            .qty-btn {
+                width: 36px;
+                height: 34px;
+            }
+
+            .qty-value {
+                width: 38px;
+                font-size: 1rem;
+                line-height: 34px;
+            }
+        }
+
+        /* ===== Modal Overlay ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(6px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--card-bg);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 440px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+            transform: translateY(30px) scale(0.95);
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow: hidden;
+        }
+
+        .modal-overlay.active .modal {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-header {
+            padding: 22px 24px 16px;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .modal-header h2 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 20px;
+        }
+
+        /* Modal Product Item */
+        .modal-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .modal-item:last-child {
+            border-bottom: none;
+        }
+
+        .modal-item-image {
+            width: 64px;
+            height: 64px;
+            border-radius: 12px;
+            overflow: hidden;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .modal-item-name {
+            flex: 1;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .modal-item-qty {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            min-width: 60px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .modal-item-qty .qty-unit {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-left: 2px;
+        }
+
+        /* Modal Footer */
+        .modal-footer {
+            padding: 16px 24px 22px;
+            border-top: 2px solid var(--border);
+            background: #f8fafc;
+        }
+
+        .modal-total-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .modal-total-label {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .modal-total-amount {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .modal-total-amount .yen {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 14px 0;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: inherit;
+            border: none;
+        }
+
+        .modal-btn-cancel {
+            background: #e2e8f0;
+            color: var(--text-secondary);
+        }
+
+        .modal-btn-cancel:hover {
+            background: #cbd5e1;
+        }
+
+        .modal-btn-confirm {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+        }
+
+        .modal-btn-confirm:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+        }
+
+        .modal-btn-confirm:active {
+            transform: translateY(0);
+        }
+
+        /* Modal responsive */
+        @media (max-width: 768px) {
+            .modal-overlay {
+                padding: 16px;
+                align-items: flex-end;
+            }
+
+            .modal {
+                max-height: 80vh;
+                border-radius: 20px 20px 16px 16px;
+            }
+
+            .modal-item-image {
+                width: 56px;
+                height: 56px;
+            }
+
+            .modal-item-qty {
+                font-size: 1.3rem;
+            }
+
+            .modal-total-amount {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* ===== Toast Notification ===== */
+        .toast-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .toast-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .toast-box {
+            background: #fff;
+            border-radius: 20px;
+            padding: 36px 44px;
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+            transform: scale(0.85);
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-width: 360px;
+            width: 90%;
+        }
+
+        .toast-overlay.active .toast-box {
+            transform: scale(1);
+        }
+
+        .toast-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+            line-height: 1;
+        }
+
+        .toast-message {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .toast-btn {
+            margin-top: 20px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            border: none;
+            padding: 12px 36px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+        }
+
+        .toast-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+        }
+
+        .toast-btn.warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .toast-btn.warning:hover {
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ===== Header ===== -->
+    <header class="header" id="header">
+        <div class="header-inner">
+            <div>
+                <h1 class="header-title">
+                    <span class="icon">🍹</span>
+                    ドリンク注文
+                </h1>
+                <p class="header-subtitle">売上管理システム</p>
+            </div>
+            <div class="header-price-badge">
+                すべて一律 ¥200
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== Summary Bar ===== -->
+    <div class="summary-bar" id="summaryBar">
+        <div class="summary-inner">
+            <div class="summary-stats">
+                <div class="summary-stat">
+                    選択商品
+                    <span class="value" id="selectedCount">0</span>
+                    <span class="unit">種</span>
+                </div>
+                <div class="summary-stat">
+                    合計数量
+                    <span class="value" id="totalQty">0</span>
+                    <span class="unit">個</span>
+                </div>
+            </div>
+            <div class="summary-total" id="summaryTotal">
+                合計 ¥0
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Products ===== -->
+    <main class="products-container">
+        <div class="products-grid" id="productsGrid">
+            <!-- Products will be generated by JavaScript -->
+        </div>
+    </main>
+
+    <!-- ===== Bottom Spacer ===== -->
+    <div class="bottom-spacer"></div>
+
+    <!-- ===== Action Bar (Fixed Bottom) ===== -->
+    <div class="action-bar" id="actionBar">
+        <div class="action-bar-inner">
+            <div class="action-total-info">
+                <span class="action-total-label">合計金額</span>
+                <span class="action-total-amount" id="actionTotal"><span class="yen">¥</span>0</span>
+            </div>
+            <button class="action-btn" id="confirmBtn" onclick="handleConfirm()">注文を確定</button>
+        </div>
+    </div>
+
+    <!-- ===== Order Confirmation Modal ===== -->
+    <div class="modal-overlay" id="orderModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>📋 注文内容の確認</h2>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Items rendered by JS -->
+            </div>
+            <div class="modal-footer">
+                <div class="modal-total-row">
+                    <span class="modal-total-label">合計金額</span>
+                    <span class="modal-total-amount" id="modalTotal"><span class="yen">¥</span>0</span>
+                </div>
+                <div class="modal-buttons">
+                    <button class="modal-btn modal-btn-cancel" onclick="closeModal()">戻る</button>
+                    <button class="modal-btn modal-btn-confirm" onclick="confirmOrder()">確定する</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Toast Notification ===== -->
+    <div class="toast-overlay" id="toastOverlay">
+        <div class="toast-box">
+            <div class="toast-icon" id="toastIcon"></div>
+            <div class="toast-message" id="toastMessage"></div>
+            <button class="toast-btn" id="toastBtn" onclick="closeToast()">OK</button>
+        </div>
+    </div>
+
+    <script>
+        // ===== GAS Configuration =====
+        // ※以下のURLを実際のGASのWeb App URLに変更してください
+        const GAS_REALTIME_URL = 'https://script.google.com/macros/s/AKfycbwqLQYOIm-V2KeJ2uyOQ7RW0QkBaQMdeDYpyeUGytI377vZiETiGQxZCCLSwvcEqh0K/exec';
+        const GAS_BATCH_URL = 'https://script.google.com/macros/s/AKfycbwVgisLY0hPmo-K1LYj3KipTkEf6cCKEEKfeP7Sd3LCctR_wWwnx73oke3Qf18xGtU-6w/exec';
+
+        // ===== Product Data =====
+        const PRICE = 200;
+        const products = [
+            {
+                id: 1,
+                name: 'いちご',
+                desc: 'いちご果肉入りの甘酸っぱいドリンク',
+                image: 'S__12935195_1.jpg'
+            },
+            {
+                id: 2,
+                name: 'オレンジ',
+                desc: '爽やかなオレンジ風味のドリンク',
+                image: 'S__12935195_2.jpg'
+            },
+            {
+                id: 3,
+                name: 'パイナップル',
+                desc: 'トロピカルなパイナップルドリンク',
+                image: 'S__12935195_3.jpg'
+            },
+            {
+                id: 4,
+                name: 'レモン',
+                desc: 'すっきりレモン風味のドリンク',
+                image: 'S__12935195_4.jpg'
+            },
+            {
+                id: 5,
+                name: 'メロンソーダ',
+                desc: '鮮やかな緑のメロンソーダ',
+                image: 'S__12935196_1.jpg'
+            },
+            {
+                id: 6,
+                name: 'ブルーハワイ',
+                desc: '南国気分のブルーハワイドリンク',
+                image: 'S__12935196_2.jpg'
+            }
+        ];
+
+        // State
+        const state = products.map(p => ({ ...p, qty: 0, checked: false }));
+
+        // ===== SVG Icons =====
+        const checkSVG = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`;
+
+        const leftArrowSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>`;
+
+        const rightArrowSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>`;
+
+        // ===== Render =====
+        function renderProducts() {
+            const grid = document.getElementById('productsGrid');
+            grid.innerHTML = state.map((item, index) => `
+        <div class="product-card ${item.checked ? 'selected' : ''}" id="card-${item.id}">
+          <label class="product-checkbox-area" for="check-${item.id}">
+            <input 
+              type="checkbox" 
+              id="check-${item.id}" 
+              ${item.checked ? 'checked' : ''}
+              onchange="toggleProduct(${index})"
+            >
+            <span class="checkbox-custom">${checkSVG}</span>
+          </label>
+          <div class="product-image-wrapper">
+            <img src="${item.image}" alt="${item.name}" loading="lazy">
+          </div>
+          <div class="product-info">
+            <div class="product-name">${item.name}</div>
+            <div class="product-desc">${item.desc}</div>
+            <div class="product-price">¥${PRICE}</div>
+            <div class="quantity-selector">
+              <button class="qty-btn" onclick="changeQty(${index}, -1)" aria-label="数量を減らす">
+                ${leftArrowSVG}
+              </button>
+              <div class="qty-value ${item.qty > 0 ? 'has-items' : ''}" id="qty-${item.id}">${item.qty}</div>
+              <button class="qty-btn" onclick="changeQty(${index}, 1)" aria-label="数量を増やす">
+                ${rightArrowSVG}
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+        }
+
+        // ===== Toggle Checkbox =====
+        function toggleProduct(index) {
+            const item = state[index];
+            item.checked = !item.checked;
+
+            if (item.checked && item.qty === 0) {
+                item.qty = 1;
+            }
+            if (!item.checked) {
+                item.qty = 0;
+            }
+
+            renderProducts();
+            updateSummary();
+        }
+
+        // ===== Change Quantity =====
+        function changeQty(index, delta) {
+            const item = state[index];
+            const newQty = item.qty + delta;
+
+            if (newQty < 0) return;
+
+            item.qty = newQty;
+
+            // Auto-check/uncheck based on quantity
+            if (newQty > 0) {
+                item.checked = true;
+            } else {
+                item.checked = false;
+            }
+
+            renderProducts();
+            updateSummary();
+        }
+
+        // ===== Update Summary =====
+        function updateSummary() {
+            const selectedCount = state.filter(i => i.checked).length;
+            const totalQty = state.reduce((sum, i) => sum + i.qty, 0);
+            const totalPrice = totalQty * PRICE;
+
+            document.getElementById('selectedCount').textContent = selectedCount;
+            document.getElementById('totalQty').textContent = totalQty;
+            document.getElementById('summaryTotal').textContent = `合計 ¥${totalPrice.toLocaleString()}`;
+            document.getElementById('actionTotal').innerHTML = `<span class="yen">¥</span>${totalPrice.toLocaleString()}`;
+        }
+
+        // ===== Modal Functions =====
+        function handleConfirm() {
+            const orderedItems = state.filter(i => i.qty > 0);
+
+            if (orderedItems.length === 0) {
+                showToast('⚠️', '商品を選択してください。', 'warning');
+                return;
+            }
+
+            const totalQty = orderedItems.reduce((sum, i) => sum + i.qty, 0);
+            const totalPrice = totalQty * PRICE;
+
+            // Render modal body
+            const modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = orderedItems.map(item => `
+        <div class="modal-item">
+          <div class="modal-item-image">
+            <img src="${item.image}" alt="${item.name}">
+          </div>
+          <div class="modal-item-name">${item.name}</div>
+          <div class="modal-item-qty">${item.qty}<span class="qty-unit">個</span></div>
+        </div>
+      `).join('');
+
+            // Update total
+            document.getElementById('modalTotal').innerHTML = `<span class="yen">¥</span>${totalPrice.toLocaleString()}`;
+
+            // Show modal
+            const overlay = document.getElementById('orderModal');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            const overlay = document.getElementById('orderModal');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function confirmOrder() {
+            closeModal();
+
+            const orderedItems = state.filter(i => i.qty > 0);
+            const totalQty = orderedItems.reduce((sum, i) => sum + i.qty, 0);
+            const totalPrice = totalQty * PRICE;
+
+            // 1. 通し番号の取得と更新
+            let serial = parseInt(localStorage.getItem('sales_serial_number') || '0', 10) + 1;
+            localStorage.setItem('sales_serial_number', serial);
+
+            // 2. 決済時刻の取得
+            const now = new Date();
+            const pad = n => n.toString().padStart(2, '0');
+            const timestamp = `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+            // 3. データ行の作成
+            // フォーマット: [通し番号, 決済時刻, id1個数, id2個数, id3個数, id4個数, id5個数, id6個数, 合計個数, 合計金額]
+            let orderRecord = [serial, timestamp];
+            for (let id = 1; id <= 6; id++) {
+                const p = state.find(item => item.id === id);
+                orderRecord.push(p ? p.qty : 0);
+            }
+            orderRecord.push(totalQty);
+            orderRecord.push(totalPrice);
+
+            // 4. ローカル履歴に保存 (最大1000件、超過で古い順に削除)
+            let history = JSON.parse(localStorage.getItem('sales_history') || '[]');
+            history.push(orderRecord);
+            if (history.length > 1000) {
+                history.shift(); // 古いものを削除
+            }
+            localStorage.setItem('sales_history', JSON.stringify(history));
+
+            // 5. リアルタイム制送信キューに追加
+            let realtimeQueue = JSON.parse(localStorage.getItem('sync_queue_realtime') || '[]');
+            realtimeQueue.push(orderRecord);
+            localStorage.setItem('sync_queue_realtime', JSON.stringify(realtimeQueue));
+
+            // 6. 100件バッチ送信キューに追加
+            let batchQueue = JSON.parse(localStorage.getItem('sync_queue_batch') || '[]');
+            batchQueue.push(orderRecord);
+            localStorage.setItem('sync_queue_batch', JSON.stringify(batchQueue));
+
+            // UIのリセット
+            state.forEach(item => {
+                item.qty = 0;
+                item.checked = false;
+            });
+            renderProducts();
+            updateSummary();
+
+            // バックグラウンド送信を直ちに試行
+            syncQueues();
+
+            // モーダルが閉じるのを少し待ってから完了トーストを表示
+            setTimeout(() => {
+                showToast('✅', '注文が確定されました！', 'success');
+            }, 350);
+        }
+
+        // ===== Toast Functions =====
+        function showToast(icon, message, type) {
+            document.getElementById('toastIcon').textContent = icon;
+            document.getElementById('toastMessage').textContent = message;
+            const btn = document.getElementById('toastBtn');
+            btn.className = 'toast-btn' + (type === 'warning' ? ' warning' : '');
+            const overlay = document.getElementById('toastOverlay');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeToast() {
+            const overlay = document.getElementById('toastOverlay');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Close toast on overlay click
+        document.getElementById('toastOverlay').addEventListener('click', function (e) {
+            if (e.target === this) closeToast();
+        });
+
+        // Close modal on overlay click
+        document.getElementById('orderModal').addEventListener('click', function (e) {
+            if (e.target === this) closeModal();
+        });
+
+        // ===== Background Sync Functions =====
+        async function syncQueues() {
+            // 1. リアルタイムキューの送信
+            let realtimeQueue = JSON.parse(localStorage.getItem('sync_queue_realtime') || '[]');
+
+            if (realtimeQueue.length > 0 && !GAS_REALTIME_URL.includes('YOUR_GAS')) {
+                // 先頭の1件を送信
+                const nextItem = realtimeQueue[0];
+                try {
+                    const params = new URLSearchParams();
+                    params.append('data', JSON.stringify(nextItem));
+                    const res = await fetch(GAS_REALTIME_URL, {
+                        method: 'POST',
+                        mode: 'no-cors', // クロスドメインのGAS用
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: params
+                    });
+                    // no-cors の場合、エラーがスローされなければ成功とみなす
+                    realtimeQueue.shift();
+                    localStorage.setItem('sync_queue_realtime', JSON.stringify(realtimeQueue));
+
+                    // まだ残っていれば連続して送信
+                    if (realtimeQueue.length > 0) {
+                        setTimeout(syncQueues, 500);
+                    }
+                } catch (e) {
+                    console.error("リアルタイム送信に失敗しました。1分後に再試行します:", e);
+                }
+            }
+
+            // 2. バッチキューの送信 (100件以上溜まっている場合)
+            let batchQueue = JSON.parse(localStorage.getItem('sync_queue_batch') || '[]');
+            if (batchQueue.length >= 100 && !GAS_BATCH_URL.includes('YOUR_GAS')) {
+                const batchData = batchQueue.slice(0, 100); // 最初の100件を取得
+                try {
+                    const params = new URLSearchParams();
+                    params.append('data', JSON.stringify(batchData));
+                    const res = await fetch(GAS_BATCH_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: params
+                    });
+
+                    // 成功時、送信した100件をキューから削除
+                    batchQueue = batchQueue.slice(100);
+                    localStorage.setItem('sync_queue_batch', JSON.stringify(batchQueue));
+                } catch (e) {
+                    console.error("バッチ送信に失敗しました。1分後に再試行します:", e);
+                }
+            }
+        }
+
+        // 1分ごとにキューを確認して再送信処理を行う (ネットワーク復帰時などに備える)
+        setInterval(syncQueues, 60000);
+
+        // ===== Hidden Admin Features =====
+        // 方法1: URLパラメータによるリセット (例: idex.html?reset=1 にアクセス)
+        if (new URLSearchParams(window.location.search).get('reset') === '1') {
+            localStorage.setItem('sales_serial_number', '0');
+            // 履歴も消したい場合は以下を有効化
+            // localStorage.removeItem('sales_history');
+            alert('【管理者モード】通し番号をリセットしました。');
+            // パラメータを消去して通常のURLに戻す
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+
+        // ===== Initialize =====
+        renderProducts();
+        updateSummary();
+    </script>
+</body>
+
+</html>
