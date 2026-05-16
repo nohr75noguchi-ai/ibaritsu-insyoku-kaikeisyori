@@ -1321,8 +1321,8 @@
     <script>
         // ===== GAS Configuration =====
         // ※以下のURLを実際のGASのWeb App URLに変更してください
-        const GAS_REALTIME_URL = 'https://script.google.com/macros/s/AKfycbx3LirIZzkjEhmWBOTGqEugwrldM4jbKC-J6thBoriWGkl2L1DgTFspftjcMSULL3sf/exec';
-        const GAS_BATCH_URL = 'https://script.google.com/macros/s/AKfycbxzSAiDlUP5S2_pHjaxKMb9z-LJ7_iNLO7kbeu6TV7DmSPTRISAJFB9OasGweipghhm-w/exec';
+        const GAS_REALTIME_URL = 'https://script.google.com/macros/s/AKfycbywg3Ny72bLNLqQL7t3zktGHHlgyNO-dWaq4bC-pMp9mMInEBAUbCxvu5wK8cOoTh6J/exec';
+        const GAS_BATCH_URL = 'https://script.google.com/macros/s/AKfycby2gHc1FY35qkZFpj0jI2Cp40Ti94hU73-7yXizeACusyLo6tQXcaydHV9qbmGGq0oy/exec';
 
         // ===== Product Data =====
         const PRICE = 200;
@@ -1579,60 +1579,74 @@
             if (e.target === this) closeModal();
         });
 
-        // ===== Background Sync Functions =====
+        let isSyncing = false;
+
         async function syncQueues() {
-            // 1. リアルタイムキューの送信
-            let realtimeQueue = JSON.parse(localStorage.getItem('sync_queue_realtime') || '[]');
+            if (isSyncing) return;
+            isSyncing = true;
+            try {
+                // 1. リアルタイムキューの送信
+                let realtimeQueue = JSON.parse(localStorage.getItem('sync_queue_realtime') || '[]');
 
-            if (realtimeQueue.length > 0 && !GAS_REALTIME_URL.includes('YOUR_GAS')) {
-                // 先頭の1件を送信
-                const nextItem = realtimeQueue[0];
-                try {
-                    const params = new URLSearchParams();
-                    params.append('data', JSON.stringify(nextItem));
-                    const res = await fetch(GAS_REALTIME_URL, {
-                        method: 'POST',
-                        mode: 'no-cors', // クロスドメインのGAS用
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: params
-                    });
-                    // no-cors の場合、エラーがスローされなければ成功とみなす
-                    realtimeQueue.shift();
-                    localStorage.setItem('sync_queue_realtime', JSON.stringify(realtimeQueue));
+                if (realtimeQueue.length > 0 && !GAS_REALTIME_URL.includes('YOUR_GAS')) {
+                    // 先頭の1件を送信
+                    const nextItem = realtimeQueue[0];
+                    try {
+                        const params = new URLSearchParams();
+                        params.append('data', JSON.stringify(nextItem));
+                        const res = await fetch(GAS_REALTIME_URL, {
+                            method: 'POST',
+                            mode: 'no-cors', // クロスドメインのGAS用
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: params
+                        });
+                        
+                        // fetch完了後に再度 localStorage から取得 (待機中にキューが変化した可能性があるため)
+                        realtimeQueue = JSON.parse(localStorage.getItem('sync_queue_realtime') || '[]');
+                        if (realtimeQueue.length > 0) {
+                            realtimeQueue.shift();
+                            localStorage.setItem('sync_queue_realtime', JSON.stringify(realtimeQueue));
+                        }
 
-                    // まだ残っていれば連続して送信
-                    if (realtimeQueue.length > 0) {
-                        setTimeout(syncQueues, 500);
+                        // まだ残っていれば連続して送信
+                        if (realtimeQueue.length > 0) {
+                            setTimeout(syncQueues, 500);
+                        }
+                    } catch (e) {
+                        console.error("リアルタイム送信に失敗しました。1分後に再試行します:", e);
                     }
-                } catch (e) {
-                    console.error("リアルタイム送信に失敗しました。1分後に再試行します:", e);
                 }
-            }
 
-            // 2. バッチキューの送信 (100件以上溜まっている場合)
-            let batchQueue = JSON.parse(localStorage.getItem('sync_queue_batch') || '[]');
-            if (batchQueue.length >= 100 && !GAS_BATCH_URL.includes('YOUR_GAS')) {
-                const batchData = batchQueue.slice(0, 100); // 最初の100件を取得
-                try {
-                    const params = new URLSearchParams();
-                    params.append('data', JSON.stringify(batchData));
-                    const res = await fetch(GAS_BATCH_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: params
-                    });
+                // 2. バッチキューの送信 (100件以上溜まっている場合)
+                let batchQueue = JSON.parse(localStorage.getItem('sync_queue_batch') || '[]');
+                if (batchQueue.length >= 100 && !GAS_BATCH_URL.includes('YOUR_GAS')) {
+                    const batchData = batchQueue.slice(0, 100); // 最初の100件を取得
+                    try {
+                        const params = new URLSearchParams();
+                        params.append('data', JSON.stringify(batchData));
+                        const res = await fetch(GAS_BATCH_URL, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: params
+                        });
 
-                    // 成功時、送信した100件をキューから削除
-                    batchQueue = batchQueue.slice(100);
-                    localStorage.setItem('sync_queue_batch', JSON.stringify(batchQueue));
-                } catch (e) {
-                    console.error("バッチ送信に失敗しました。1分後に再試行します:", e);
+                        // 成功時、送信した100件をキューから削除
+                        batchQueue = JSON.parse(localStorage.getItem('sync_queue_batch') || '[]');
+                        if (batchQueue.length >= 100) {
+                            batchQueue = batchQueue.slice(100);
+                            localStorage.setItem('sync_queue_batch', JSON.stringify(batchQueue));
+                        }
+                    } catch (e) {
+                        console.error("バッチ送信に失敗しました。1分後に再試行します:", e);
+                    }
                 }
+            } finally {
+                isSyncing = false;
             }
         }
 
