@@ -1,0 +1,51 @@
+function doPost(e) {
+  try {
+    // リクエストボディからJSONデータを取得 (x-www-form-urlencoded と raw JSON の両方に対応)
+    var jsonString = e.parameter.data || (e.postData ? e.postData.contents : "");
+    var data = JSON.parse(jsonString);
+    
+    // スプレッドシートを取得
+    // ※「TypeError: Cannot read properties of null (reading 'getActiveSheet')」というエラーが出る場合、
+    // スクリプトがスプレッドシートと紐付いていません。
+    // その場合は以下の getActiveSpreadsheet() の行をコメントアウトし、
+    // openById() の行のコメントを外して、スプレッドシートのIDを指定してください。
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+    // var sheet = SpreadsheetApp.openById("ここにスプレッドシートのIDを貼り付け").getSheets()[0];
+    
+    // アクション種別を判定
+    var action = e.parameter.action || "append";
+    
+    if (action === "undo") {
+      // 取り消し処理: 最も下の行（データ行）を削除
+      var lastRow = sheet.getLastRow();
+      if (lastRow >= 2) { // ヘッダー行(1行目)は残す。データが1行目から始まる場合は >= 1 に変更
+        sheet.deleteRow(lastRow);
+        return ContentService.createTextOutput(JSON.stringify({"status": "success", "action": "undo", "deletedRow": lastRow}))
+          .setMimeType(ContentService.MimeType.JSON);
+      } else {
+        return ContentService.createTextOutput(JSON.stringify({"status": "error", "message": "削除できる行がありません"}))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+    
+    // 通常の追記処理
+    // dataは単一の配列を想定：[通し番号, 決済時刻, 商品1, ..., 商品5, 合計個数, 合計金額]
+    if (Array.isArray(data)) {
+      sheet.appendRow(data);
+    }
+    
+    // 成功レスポンスを返す
+    return ContentService.createTextOutput(JSON.stringify({"status": "success"}))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (error) {
+    // エラーレスポンスを返す
+    return ContentService.createTextOutput(JSON.stringify({"status": "error", "message": error.message}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// 動作確認用
+function doGet(e) {
+  return ContentService.createTextOutput("Realtime GAS is active.");
+}
